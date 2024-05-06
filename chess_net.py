@@ -4,6 +4,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import chess
+import collections
 
 
 class ChessNet(nn.Module):
@@ -159,3 +160,38 @@ def predict(model, x):
     with torch.no_grad():
         outputs = model(x)
     return outputs
+
+
+def simulate_game_between_models(model1, model2):
+    board = chess.Board()
+    color = chess.WHITE
+    while not board.is_game_over():
+        move = choose_semi_random_move(model1, board, color)
+        if color == chess.WHITE:
+            color = chess.BLACK
+        else:
+            color = chess.WHITE
+        board.push(move)
+        return board_to_game(board)
+
+
+def board_to_game(board):
+    game = chess.pgn.Game()
+
+    # Undo all moves.
+    switchyard = collections.deque()
+    while board.move_stack:
+        switchyard.append(board.pop())
+
+    game.setup(board)
+    node = game
+
+    # Replay all moves.
+    while switchyard:
+        move = switchyard.pop()
+        node = node.add_variation(move)
+        board.push(move)
+
+    game.headers["Result"] = board.result()
+    return game
+
