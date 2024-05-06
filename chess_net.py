@@ -4,6 +4,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import chess
+import chess.pgn
 import collections
 
 
@@ -120,22 +121,24 @@ def distribution_over_moves(vals):
     return probs
 
 
-def choose_semi_random_move(model, board, color):
+def choose_semi_random_move(model, board, color, device):
     legal_moves = list(board.legal_moves)
     move = check_mate_single(board)
     if move is not None:
         return move
-    x = torch.Tensor(board_to_rep(board)).float().to("cuda")
+    x = torch.Tensor(board_to_rep(board)).float().to(device)
     if color == chess.BLACK:
         x *= 1
     x = x.unsqueeze(0)
     move = predict(model, x)
+    print(move)
 
     vals = []
     froms = [str(legal_move)[:2] for legal_move in legal_moves]
     froms = list(set(froms))
     for from_ in froms:
-        val = move[0, :, :][8 - int(from_[1]), letter_to_num[from_[0]]]
+        # val = move[0, :, :][8 - int(from_[1]), letter_to_num[from_[0]]]
+        val = move[0, 0, 8 - int(from_[1]), letter_to_num[from_[0]]]
         vals.append(val)
     probs = distribution_over_moves(vals)
 
@@ -145,12 +148,13 @@ def choose_semi_random_move(model, board, color):
         from_ = str(legal_move)[:2]
         if from_ == chosen_from:
             to = str(legal_move)[2:]
-            val = move[1, :, :][8 - int(to[1]), letter_to_num[to[0]]]
+            # val = move[1, :, :][8 - int(to[1]), letter_to_num[to[0]]]
+            val = move[0, 1, 8 - int(to[1]), letter_to_num[to[0]]]
             vals.append(val)
         else:
             vals.append(0)
 
-    chosen_move = legal_move[np.argmax(vals)]
+    chosen_move = legal_moves[np.argmax(vals)]
 
     return chosen_move
 
@@ -162,17 +166,18 @@ def predict(model, x):
     return outputs
 
 
-def simulate_game_between_models(model1, model2):
+def simulate_game_between_models(model1, model2, device):
     board = chess.Board()
     color = chess.WHITE
     while not board.is_game_over():
-        move = choose_semi_random_move(model1, board, color)
-        if color == chess.WHITE:
+        if color is chess.WHITE:
+            move = choose_semi_random_move(model1, board, color, device)
             color = chess.BLACK
         else:
+            move = choose_semi_random_move(model2, board, color, device)
             color = chess.WHITE
         board.push(move)
-        return board_to_game(board)
+    return board_to_game(board)
 
 
 def board_to_game(board):
@@ -195,3 +200,14 @@ def board_to_game(board):
     game.headers["Result"] = board.result()
     return game
 
+
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+    print("CUDA is available. Training on GPU.")
+else:
+    device = torch.device("cpu")
+    print("CUDA not available. Training on CPU.")
+
+model1 = ChessNet(hidden_layers=4, hidden_size=200).to(device)
+model1.load_state_dict(torch.load("chess_model_epoch_27.pth", map_location=device))
+print(simulate_game_between_models(model1, model1, device))
