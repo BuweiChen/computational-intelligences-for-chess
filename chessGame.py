@@ -31,8 +31,14 @@ class ChessState(State):
 
         self -- a terminal state
         """
-        return 1 if self.board.outcome().winner == chess.WHITE else 0
-        # Experiment with no payoff for draws
+        return (
+            25
+            if self.board.outcome().winner == chess.WHITE
+            else -25
+            if self.board.outcome().winner == chess.BLACK
+            else 0
+        )
+        # Experiment terminal state payoffs
 
     def actor(self):
         """Determines which player is the actor in this nonterminal state.
@@ -66,6 +72,58 @@ class ChessState(State):
         new_state = deepcopy(self)
         new_state.board.push(action)
         return new_state
+
+    def heuristic_evaluation(self):
+        """Calculate the heuristic value of the board from the perspective of the white player."""
+        piece_values = {
+            "p": -1,
+            "n": -3.05,
+            "b": -3.33,
+            "r": -5.63,
+            "q": -9.5,
+            "k": 0,  # kings are invaluable but shouldn't affect material count
+            "P": 1,
+            "N": 3.05,
+            "B": 3.33,
+            "R": 5.63,
+            "Q": 9.5,
+            "K": 0,
+        }
+        value = 0
+        for piece in self.board.piece_map().values():
+            value += piece_values.get(piece.symbol(), 0)
+
+        # Evaluate the mobility of both kings
+        white_king_mobility = self.king_mobility(chess.WHITE)
+        black_king_mobility = self.king_mobility(chess.BLACK)
+        mobility_factor = (
+            0.1  # Adjust this factor to tune the influence of mobility on the heuristic
+        )
+
+        # Calculate the mobility difference
+        if self.board.turn == chess.WHITE:
+            mobility_value = mobility_factor * (
+                white_king_mobility - black_king_mobility
+            )
+        else:
+            mobility_value = mobility_factor * (
+                black_king_mobility - white_king_mobility
+            )
+
+        return value + mobility_value
+
+    def king_mobility(self, color):
+        """Calculates the number of legal moves available to the king for the given turn."""
+        king_position = self.board.king(color)
+        if king_position is None:
+            return (
+                0  # In case the king is not found (should not happen in legal states)
+            )
+
+        legal_moves = [
+            move for move in self.board.legal_moves if move.from_square == king_position
+        ]
+        return len(legal_moves)
 
     def __hash__(self):
         return hash(self.board.board_fen()) * 2 + hash(self.board.turn)

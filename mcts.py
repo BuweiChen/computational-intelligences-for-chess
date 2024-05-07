@@ -4,13 +4,16 @@ import time
 from collections import deque
 
 
-def mcts_policy(cpu_time):
+def mcts_policy(cpu_time, max_depth=5):
     """takes the allowed CPU time in seconds and returns a function
         that takes a position and returns the move suggested by running
         MCTS for that amount of time starting with that position.
 
+        Additional argument max_depth to limit the search depth.
+
     Args:
         cpu_time (int): the allowed CPU time in seconds
+        max_depth (int): the search depth
     """
 
     def policy(state):
@@ -29,11 +32,13 @@ def mcts_policy(cpu_time):
         state_visits = {}
         state_rewards = {}
 
-        def choose_path_to_leaf(s):
+        def choose_path_to_leaf(s, depth=0):
             """chooses a path to the next leaf to explore in MCTS using UCB
+               Adding depth tracking to the function.
 
             Args:
                 s (State): a position
+                depth (int): search depth
 
             Returns:
                 deque: the path taken to get the leaf, including the leaf
@@ -41,7 +46,7 @@ def mcts_policy(cpu_time):
             path = deque()
             curr_state = s
 
-            while True:
+            while depth < max_depth:
                 path.append(curr_state)
                 if curr_state.is_terminal() or curr_state not in state_children:
                     break
@@ -76,8 +81,9 @@ def mcts_policy(cpu_time):
 
             return path
 
-        def play_to_terminal(s):
-            """simulate the state with random moves until terminal state
+        def play_to_terminal(s, depth=0):
+            """simulate the state with random moves until terminal state.
+               modified to check for depth and use heuristic when depth exceeds max_depth.
 
             Args:
                 s (State): a position
@@ -85,13 +91,18 @@ def mcts_policy(cpu_time):
             Returns:
                 float: payoff at the terminal state
             """
+
             curr_state = s
-            while not curr_state.is_terminal():
+            while not curr_state.is_terminal() and depth < max_depth:
                 possible_actions = curr_state.get_actions()
                 rand_action = random.choice(possible_actions)
                 curr_state = curr_state.successor(rand_action)
+                depth += 1
 
-            return curr_state.payoff()
+            if depth >= max_depth:
+                return curr_state.heuristic_evaluation()  # Using heuristic value
+            else:
+                return curr_state.payoff()  # Terminal state payoff
 
         def backpropagate(path, payoff):
             """pop from the path and update state_visits and state_rewards
@@ -135,35 +146,43 @@ def mcts_policy(cpu_time):
                 best_move_reward = float("-inf")
                 for move in all_moves:
                     successor_state = s.successor(move)
-                    # print(successor_state.board.fen())
-                    move_reward = (
-                        state_rewards[successor_state] / state_visits[successor_state]
-                    )
-                    if move_reward > best_move_reward:
-                        best_move = move
-                        best_move_reward = move_reward
+                    if successor_state in state_rewards.keys():
+                        # print(successor_state.board.fen())
+                        move_reward = (
+                            state_rewards[successor_state]
+                            / state_visits[successor_state]
+                        )
+                        if move_reward > best_move_reward:
+                            best_move = move
+                            best_move_reward = move_reward
             else:
                 best_move_reward = float("inf")
                 for move in all_moves:
                     successor_state = s.successor(move)
                     # print(successor_state.board.fen())
-                    move_reward = (
-                        state_rewards[successor_state] / state_visits[successor_state]
-                    )
-                    if move_reward < best_move_reward:
-                        best_move = move
-                        best_move_reward = move_reward
-            print(best_move)
+                    if successor_state in state_rewards.keys():
+                        move_reward = (
+                            state_rewards[successor_state]
+                            / state_visits[successor_state]
+                        )
+                        if move_reward < best_move_reward:
+                            best_move = move
+                            best_move_reward = move_reward
+            b = s.successor(best_move)
+            print(b.board)
+            print(b.heuristic_evaluation())
+            print(b.board.fen())
             return best_move
 
         while time.time() - start_time < cpu_time:
             path = choose_path_to_leaf(state)
+            leaf_depth = len(path) - 1
             leaf = path.pop()
             expand_if_expandable(leaf)
             path.append(leaf)
-            payoff = play_to_terminal(leaf)
+            payoff = play_to_terminal(leaf, leaf_depth)
             backpropagate(path, payoff)
-
+        print(f"states visited: {sum(list(state_visits.values()))}")
         return get_best_move(state)
 
     return policy
