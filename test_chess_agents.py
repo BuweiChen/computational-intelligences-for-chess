@@ -137,7 +137,7 @@ if __name__ == "__main__":
         type=int,
         action="store",
         default=2,
-        help="number of games to play (default=2",
+        help="number of games to play (default=2)",
     )
     parser.add_argument(
         "--time",
@@ -152,7 +152,7 @@ if __name__ == "__main__":
         dest="starting_position",
         type=str,
         action="store",
-        default=0.0,
+        default=None,
         help="starting position of the games to be simulated in fen",
     )
     parser.add_argument(
@@ -161,7 +161,7 @@ if __name__ == "__main__":
         type=str,
         action="store",
         default="alphabeta",
-        help="agent (mcts, alphabeta) for player 0, or human for yourself",
+        help="agent (mcts, alphabeta) for player 1, or human for yourself",
     )
     parser.add_argument(
         "--p2",
@@ -169,7 +169,7 @@ if __name__ == "__main__":
         type=str,
         action="store",
         default="alphabeta",
-        help="agent (mcts, alphabeta) for player 1, or human for yourself",
+        help="agent (mcts, alphabeta) for player 2, or human for yourself",
     )
     args = parser.parse_args()
 

@@ -131,7 +131,6 @@ def choose_semi_random_move(model, board, color, device):
         x *= 1
     x = x.unsqueeze(0)
     move = predict(model, x)
-    print(move)
 
     vals = []
     froms = [str(legal_move)[:2] for legal_move in legal_moves]
@@ -201,13 +200,14 @@ def board_to_game(board):
     return game
 
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-    print("CUDA is available. Training on GPU.")
-else:
-    device = torch.device("cpu")
-    print("CUDA not available. Training on CPU.")
+if __name__ == "__main__":
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print("CUDA is available. Training on GPU.")
+    else:
+        device = torch.device("cpu")
+        print("CUDA not available. Training on CPU.")
 
-model1 = ChessNet(hidden_layers=4, hidden_size=200).to(device)
-model1.load_state_dict(torch.load("chess_model_epoch_27.pth", map_location=device))
-print(simulate_game_between_models(model1, model1, device))
+    model1 = ChessNet(hidden_layers=4, hidden_size=200).to(device)
+    model1.load_state_dict(torch.load("chess_model_epoch_27.pth", map_location=device))
+    print(simulate_game_between_models(model1, model1, device))
