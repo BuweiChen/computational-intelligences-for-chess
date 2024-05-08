@@ -6,18 +6,23 @@ How do the performances of MCTS, Alpha-Beta Pruning (with and without transposit
 
 #### Quickstart
 
-Build the environment: Run `./build.sh` to create and setup the environment. This only needs to be done once, or whenever you update the list of dependencies.
-Run the tests: Execute `./test.sh` to run the tests.
-Note: you may need to run `chmod +x build.sh` and `chmod +x test.sh` to be able to execute these scripts
+1. Build the environment: Run `./build.sh` to create and setup the environment. This only needs to be done once, or whenever you update the list of dependencies.
+
+2. Run the tests: Execute `./test.sh` to run the tests.
+   Note: you may need to run `chmod +x build.sh` and `chmod +x test.sh` to be able to execute these scripts
 
 #### Description
 
 `build.sh` is self-explanatory, it creates a venv to be used for the test scripts and installs all the necessary dependencies
+
 `test.sh` runs 2 tests:
 The first test simulates a game of the DNN agent playing itself
+
 The second test simulates 5 games between the alphabeta_with_transposition agent (white) and mcts agent (black) with 5 seconds think time per move
+
 You can uncomment a third test that runs 5 games between the alphabeta_with_transposition agent (white) and alphabeta_no_transposition agent (black) with 5 seconds think time per move
 The average game length between these agents are 30 moves (each). So 5 games with 5 seconds per move comes out to be around 5*5*30\*2 = 1500 seconds. This is why I didn’t configure the test script to simulate 100 games.
+
 Below you can also find documentation on changing the parameters of the test (which agents are representing each player, think time per move, total games simulated… you can even play the agents yourself!)
 
 ### Results
@@ -33,11 +38,14 @@ Out of 20 games (1 second per move) between Alpha-Beta Pruning (Without Transpos
 #### `test_chess_agent.py`
 
 This script takes the following arguments in no particular order
+
+```
 –count: number of games to play (default=2)
 –time: time for the agents per move (in seconds, default=0.1)
 –starting_position: starting position of the games to be simulated in fen (make sure to wrap this in quotes), leave out this argument for the default starting position of a chess game
 –p1: agent (mcts, alphabeta) for player 1, or human for yourself
 –p2: agent (mcts, alphabeta) for player 2, or human for yourself
+```
 
 The same information pop up when you run `test_chess_agent.py` with –help
 
@@ -70,8 +78,11 @@ A board looks something like this (raw data)
   - Replace “.” with 0
   - If playing as black, multiply everything by -1
 - Move representation - Use 2 matrices, one representing which piece to move, one representing where to move it to - Pretty easy to implement under UCI format
-  Loss function - Since we are representing the output as 2 matrices, we will use 2 separate cross entropy losses and add the results.
-  Optimizations - A “check mate” function that searches for a single move that leads to a checkmate. If such a move exists, play it (without the NN’s say in it) - Would be interesting to test if this function makes much of a difference. Theoretically this should only be impactful when the model is bad. - Do this recursively for “forced mate” in 2, 3, or more moves. This would be interesting to test out as well
+- Loss function - Since we are representing the output as 2 matrices, we will use 2 separate cross entropy losses and add the results.
+- Optimizations
+  - A “check mate” function that searches for a single move that leads to a checkmate. If such a move exists, play it (without the NN’s say in it)
+  - Would be interesting to test if this function makes much of a difference. Theoretically this should only be impactful when the model is bad.
+  - Do this recursively for “forced mate” in 2, 3, or more moves. This would be interesting to test out as well
 
 #### `chess_net.py`
 
