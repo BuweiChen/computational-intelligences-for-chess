@@ -28,6 +28,8 @@ Out of 5 games (10 seconds per move) between MCTS and Alpha-Beta Pruning (With T
 
 Out of 20 games (1 second per move) between Alpha-Beta Pruning (Without Transposition) and Alpha-Beta Pruning (With Transposition), Alpha-Beta Pruning (With Transposition) won 13/20 or 65% of the games.
 
+### Code Explanation
+
 #### `test_chess_agent.py`
 
 This script takes the following arguments in no particular order
