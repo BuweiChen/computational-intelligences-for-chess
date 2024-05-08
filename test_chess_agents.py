@@ -3,6 +3,7 @@ import sys
 import mcts
 import argparse
 import time
+import alphaBeta
 
 from chessGame import Chess
 
@@ -159,7 +160,7 @@ if __name__ == "__main__":
             args.count,
             args.p_random,
             lambda: mcts.mcts_policy(args.time),
-            lambda: mcts.mcts_policy(args.time),
+            lambda: alphaBeta.alphabeta_policy(args.time),
             args.time,
             float("inf"),
         )

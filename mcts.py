@@ -4,7 +4,7 @@ import time
 from collections import deque
 
 
-def mcts_policy(cpu_time, max_depth=5):
+def mcts_policy(cpu_time, max_depth=6):
     """takes the allowed CPU time in seconds and returns a function
         that takes a position and returns the move suggested by running
         MCTS for that amount of time starting with that position.

@@ -6,6 +6,7 @@ from chess import Board
 from copy import deepcopy
 import collections
 import chess.pgn
+import numpy as np
 
 
 class Chess(Game):
@@ -99,7 +100,12 @@ class ChessState(State):
         white_king_mobility = self.king_mobility(chess.WHITE)
         black_king_mobility = self.king_mobility(chess.BLACK)
         mobility_factor = (
-            0.5  # Adjust this factor to tune the influence of mobility on the heuristic
+            0
+            if len(self.board.move_stack) == 0
+            else 0.1
+            * np.log(
+                len(self.board.move_stack)
+            )  # Adjust this factor to tune the influence of mobility on the heuristic
         )
 
         # Calculate the mobility difference
