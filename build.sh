@@ -5,7 +5,7 @@ VENV_NAME="chess_env"
 
 # Create the virtual environment
 echo "Creating virtual environment..."
-python -m venv $VENV_NAME
+python3 -m venv $VENV_NAME
 
 # Activate the virtual environment
 echo "Activating virtual environment..."

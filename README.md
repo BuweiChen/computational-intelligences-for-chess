@@ -9,7 +9,8 @@ How do the performances of MCTS, Alpha-Beta Pruning (with and without transposit
 1. Build the environment: Run `./build.sh` to create and setup the environment. This only needs to be done once, or whenever you update the list of dependencies.
 
 2. Run the tests: Execute `./test.sh` to run the tests.
-   Note: you may need to run `chmod +x build.sh` and `chmod +x test.sh` to be able to execute these scripts
+
+Note: you may need to run `chmod +x build.sh` and `chmod +x test.sh` to be able to execute these scripts. You also may need to change any `python3` calls in `build.sh` to `python` depending on how you installed python
 
 #### Description
 

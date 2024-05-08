@@ -169,11 +169,10 @@ def mcts_policy(cpu_time, max_depth=6):
                             best_move = move
                             best_move_reward = move_reward
             b = s.successor(best_move)
-            print(best_move)
-            print(best_move_reward)
-            print(state_rewards[b])
+            print(f"Best move: {best_move}")
+            print(f"Best value: {best_move_reward}")
             print(b.board)
-            print(b.heuristic_evaluation())
+            print(f"Heuristic evaluation: {b.heuristic_evaluation()}")
             # print(state_rewards.values())
             return best_move
 
@@ -185,7 +184,7 @@ def mcts_policy(cpu_time, max_depth=6):
             path.append(leaf)
             payoff = play_to_terminal(leaf, leaf_depth)
             backpropagate(path, payoff)
-        print(f"states visited: {sum(list(state_visits.values()))}")
+        print(f"States visited: {sum(list(state_visits.values()))}")
         return get_best_move(state)
 
     return policy

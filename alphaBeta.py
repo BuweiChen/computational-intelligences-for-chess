@@ -148,7 +148,7 @@ def alphabeta_policy(cpu_time):
         if best_move:
             b = state.successor(best_move)
             print(b.board)
-            print(f"Heuristic evaluation of final position: {b.heuristic_evaluation()}")
+            print(f"Heuristic evaluation: {b.heuristic_evaluation()}")
 
         return best_move
 
