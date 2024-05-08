@@ -101,7 +101,7 @@ class ChessState(State):
         black_king_mobility = self.king_mobility(chess.BLACK)
         mobility_factor = (
             0
-            if len(self.board.move_stack) == 0
+            if len(self.board.move_stack) <= 20
             else 0.1
             * np.log(
                 len(self.board.move_stack)

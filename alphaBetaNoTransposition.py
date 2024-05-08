@@ -17,15 +17,12 @@ def alphabeta_policy(cpu_time):
         "Q": 9.5,
         "K": 0,
     }
-    transposition_table = {}
 
     def policy(state):
         start_time = time.time()
         current_depth = 1
         best_move = None
         best_value = None
-        last_completed_best_move = None
-        last_completed_best_value = None
         states_evaluated = 0
 
         while True:
@@ -33,18 +30,11 @@ def alphabeta_policy(cpu_time):
                 break
 
             best_value = float("-inf") if state.actor() == chess.WHITE else float("inf")
-            depth_completed = False
 
             def alphabeta(state, depth, alpha, beta, maximizing_player, move_depth=1):
                 nonlocal states_evaluated
                 if time.time() - start_time > cpu_time:
                     raise TimeoutError
-
-                transposition_key = (state.board.fen(), depth, maximizing_player)
-                if transposition_key in transposition_table:
-                    value, stored_depth = transposition_table[transposition_key]
-                    if stored_depth >= depth:
-                        return value
 
                 if depth == 0 or state.is_terminal():
                     states_evaluated += 1
@@ -96,6 +86,7 @@ def alphabeta_policy(cpu_time):
                         alpha = max(alpha, value)
                         if alpha >= beta:
                             break
+                    return value
                 else:
                     value = float("inf")
                     for move in moves:
@@ -109,8 +100,7 @@ def alphabeta_policy(cpu_time):
                         beta = min(beta, value)
                         if alpha >= beta:
                             break
-                transposition_table[transposition_key] = (value, depth)
-                return value
+                    return value
 
             try:
                 for move in state.get_actions():
@@ -129,16 +119,9 @@ def alphabeta_policy(cpu_time):
                         best_value = value
                         best_move = move
 
-                last_completed_best_move = best_move
-                last_completed_best_value = best_value
-                depth_completed = True
                 current_depth += 1
             except TimeoutError:
                 break
-
-        if last_completed_best_move is not None:
-            best_move = last_completed_best_move
-            best_value = last_completed_best_value
 
         # Debugging prints
         print(f"States evaluated: {states_evaluated}")

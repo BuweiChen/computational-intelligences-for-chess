@@ -2,13 +2,14 @@ import random
 import sys
 import mcts
 import argparse
-import time
 import alphaBeta
+import chess
+import alphaBetaNoTransposition
 
 from chessGame import Chess
 
 
-class MCTSTestError(Exception):
+class TestError(Exception):
     pass
 
 
@@ -17,32 +18,49 @@ def random_choice(position):
     return random.choice(moves)
 
 
-def compare_policies(game, p1, p2, games, prob, time_limit_1, time_limit_2):
+def compare_policies(game, p1, p2, games):
     p1_wins = 0
     p2_wins = 0
     p1_score = 0
-    p1_time = 0.0
-    p2_time = 0.0
 
     for i in range(games):
         # start with fresh copies of the policy functions
-        p1_policy = p1()
-        p2_policy = p2()
+        if p1:
+            p1_policy = p1()
+        else:
+            p1_policy = None
+        if p2:
+            p2_policy = p2()
+        else:
+            p2_policy = None
         position = game.initial_state()
         copy = position
 
         while not position.is_terminal():
-            if random.random() < prob:
-                if position.actor() != i % 2:
-                    start = time.time()
+            if position.actor() != i % 2:
+                if p1_policy:
                     move = p1_policy(position)
-                    p1_time = max(p1_time, time.time() - start)
                 else:
-                    start = time.time()
-                    move = p2_policy(position)
-                    p2_time = max(p2_time, time.time() - start)
+                    move = None
+                    while not move:
+                        try:
+                            move = chess.Move.from_uci(
+                                input("your move in uci format (e.g. e2e4):")
+                            )
+                        except Exception:
+                            print("not a valid move in uci format")
             else:
-                move = random_choice(position)
+                if p2_policy:
+                    move = p2_policy(position)
+                else:
+                    move = None
+                    while not move:
+                        try:
+                            move = chess.Move.from_uci(
+                                input("your move in uci format (e.g. e2e4):")
+                            )
+                        except Exception:
+                            print("not a valid move in uci format")
             position = position.successor(move)
 
         p1_score += position.payoff() * (1 if i % 2 == 0 else -1)
@@ -56,16 +74,14 @@ def compare_policies(game, p1, p2, games, prob, time_limit_1, time_limit_2):
         else:
             p2_wins += 1
         print(position.to_game())
-
-    if p1_time > time_limit_1 + 0.01:
-        print("WARNING: max time for P1 =", p1_time)
-    if p2_time > time_limit_2 + 0.01:
-        print("WARNING: max time for P2 =", p2_time)
     return p1_score / games, p1_wins / games
 
 
 def test_game(
-    game, count, p_random, p1_policy_fxn, p2_policy_fxn, time_limit_1, time_limit_2
+    game,
+    count,
+    p1,
+    p2,
 ):
     """Tests a search policy through a series of complete games of Kalah.
     The test passes if the search wins at least the given percentage of
@@ -84,14 +100,30 @@ def test_game(
                    suggested move
 
     """
+    p1_policy_fxn = (
+        (lambda: alphaBeta.alphabeta_policy(args.time))
+        if p1 == "alphabeta"
+        else (lambda: mcts.mcts_policy(args.time))
+        if p1 == "mcts"
+        else (lambda: alphaBetaNoTransposition.alphabeta_policy(args.time))
+        if p1 == "ab_no_transposition"
+        else None
+    )
+    p2_policy_fxn = (
+        (lambda: alphaBeta.alphabeta_policy(args.time))
+        if p2 == "alphabeta"
+        else (lambda: mcts.mcts_policy(args.time))
+        if p2 == "mcts"
+        else (lambda: alphaBetaNoTransposition.alphabeta_policy(args.time))
+        if p2 == "ab_no_transposition"
+        else None
+    )
+
     margin, wins = compare_policies(
         game,
         p1_policy_fxn,
         p2_policy_fxn,
         count,
-        1.0 - p_random,
-        time_limit_1,
-        time_limit_2,
     )
 
     print("NET: ", margin, "; WINS: ", wins, sep="")
@@ -113,23 +145,7 @@ if __name__ == "__main__":
         type=float,
         action="store",
         default=0.1,
-        help="time for MCTS per move",
-    )
-    # parser.add_argument(
-    #     "--depth",
-    #     dest="depth",
-    #     type=int,
-    #     action="store",
-    #     default=2,
-    #     help="depth of minimax search to compare MCTS to (default=2)",
-    # )
-    parser.add_argument(
-        "--random",
-        dest="p_random",
-        type=float,
-        action="store",
-        default=0.0,
-        help="p(random instead of minimax) (default=0.0)",
+        help="time for the agents per move",
     )
     parser.add_argument(
         "--starting_position",
@@ -139,32 +155,61 @@ if __name__ == "__main__":
         default=0.0,
         help="starting position of the games to be simulated in fen",
     )
+    parser.add_argument(
+        "--p1",
+        dest="p1",
+        type=str,
+        action="store",
+        default="alphabeta",
+        help="agent (mcts, alphabeta) for player 0, or human for yourself",
+    )
+    parser.add_argument(
+        "--p2",
+        dest="p2",
+        type=str,
+        action="store",
+        default="alphabeta",
+        help="agent (mcts, alphabeta) for player 1, or human for yourself",
+    )
     args = parser.parse_args()
 
     try:
         if args.count < 1:
-            raise MCTSTestError("count must be positive")
-        # if args.depth < 1:
-        #     raise MCTSTestError("depth must be positive")
-        if args.p_random < 0.0 or args.p_random > 1.0:
-            raise MCTSTestError("p_random must be between 0.0 and 1.0 inclusive")
+            raise TestError("count must be positive")
         if args.time <= 0:
-            raise MCTSTestError("time must be positive")
+            raise TestError("time must be positive")
         if not args.starting_position:
             game = Chess()
         else:
             game = Chess(args.starting_position)
+        if not (
+            isinstance(args.p1, str)
+            and (
+                args.p1 == "mcts"
+                or args.p1 == "alphabeta"
+                or args.p1 == "human"
+                or args.p1 == "ab_no_transposition"
+            )
+        ):
+            raise TestError("p1 must be mcts, alphabeta, ab_no_transposition, or human")
+        if not (
+            isinstance(args.p2, str)
+            and (
+                args.p2 == "mcts"
+                or args.p2 == "alphabeta"
+                or args.p2 == "human"
+                or args.p2 == "ab_no_transposition"
+            )
+        ):
+            raise TestError("p2 must be mcts, alphabeta, ab_no_transposition, or human")
 
         test_game(
             game,
             args.count,
-            args.p_random,
-            lambda: mcts.mcts_policy(args.time),
-            lambda: alphaBeta.alphabeta_policy(args.time),
-            args.time,
-            float("inf"),
+            args.p1,
+            args.p2,
         )
         sys.exit(0)
-    except MCTSTestError as err:
+    except TestError as err:
         print(sys.argv[0] + ":", str(err))
         sys.exit(1)
