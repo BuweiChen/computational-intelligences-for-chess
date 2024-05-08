@@ -12,7 +12,7 @@ class Chess(Game):
 
     def initial_state(self):
         """Returns the initial state of this game."""
-        return ChessState(Board(chess.STARTING_BOARD_FEN))
+        return ChessState(Board("2k5/5RP1/4N3/2p4K/2P5/P1P5/7P/8 w - - 1 102"))
 
 
 class ChessState(State):
@@ -32,9 +32,9 @@ class ChessState(State):
         self -- a terminal state
         """
         return (
-            25
+            100
             if self.board.outcome().winner == chess.WHITE
-            else -25
+            else -100
             if self.board.outcome().winner == chess.BLACK
             else 0
         )

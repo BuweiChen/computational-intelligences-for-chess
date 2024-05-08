@@ -2,6 +2,7 @@ import math
 import random
 import time
 from collections import deque
+import chess
 
 
 def mcts_policy(cpu_time, max_depth=5):
@@ -62,7 +63,7 @@ def mcts_policy(cpu_time, max_depth=5):
                         next_state = child
                         break
                     mean_reward = state_rewards[child] / state_visits[child]
-                    if curr_state.actor() == 0:
+                    if curr_state.actor() == 1:
                         ucb_score = mean_reward + math.sqrt(
                             2 * math.log(total_visits) / state_visits[child]
                         )
@@ -141,11 +142,17 @@ def mcts_policy(cpu_time, max_depth=5):
             """
             # print([state.board.fen() for state in list(state_rewards.keys())])
             all_moves = s.get_actions()
+            print(f"all moves: {all_moves}")
             best_move = None
-            if s.actor() == 0:
+            if s.actor() == 1:
                 best_move_reward = float("-inf")
                 for move in all_moves:
                     successor_state = s.successor(move)
+                    print(successor_state)
+                    if move == chess.Move.from_uci("g7g8q"):
+                        print(
+                            f"g7g8q, total reward: {state_rewards[successor_state]}\naverage reward: {state_rewards[successor_state]/ state_visits[successor_state]}"
+                        )
                     if successor_state in state_rewards.keys():
                         # print(successor_state.board.fen())
                         move_reward = (
@@ -169,9 +176,13 @@ def mcts_policy(cpu_time, max_depth=5):
                             best_move = move
                             best_move_reward = move_reward
             b = s.successor(best_move)
+            print(best_move)
+            print(best_move_reward)
+            print(state_rewards[b])
             print(b.board)
             print(b.heuristic_evaluation())
             print(b.board.fen())
+            # print(state_rewards.values())
             return best_move
 
         while time.time() - start_time < cpu_time:
