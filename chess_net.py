@@ -209,5 +209,5 @@ if __name__ == "__main__":
         print("CUDA not available. Training on CPU.")
 
     model1 = ChessNet(hidden_layers=4, hidden_size=200).to(device)
-    model1.load_state_dict(torch.load("chess_model_epoch_27.pth", map_location=device))
+    model1.load_state_dict(torch.load("chess_model_epoch_300.pth", map_location=device))
     print(simulate_game_between_models(model1, model1, device))
