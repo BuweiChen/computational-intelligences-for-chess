@@ -55,7 +55,7 @@ Note: don’t forget to call this script with the python located in the venv gen
 
 This is a notebook that sets up the training environment, processes the data, and trains the model. Feel free to run it if you want, but I’ve notices that it takes some fidgeting with to work on different local environments. It’s much easier to train on google colab, here’s a notebook with the code modifications to make it run on colab https://colab.research.google.com/drive/1ANDBnV-EgJv005vEywiE8CuqLYR9rjhJ?usp=sharing
 
-##### Neural Network i/o Representation (feel free to skip, included because this was in my notes and I think it’s cool)
+#### Neural Network i/o Representation (feel free to skip, included because this was in my notes and I think it’s cool)
 
 Use a matrix to map the positions of each piece types (one feature map for pawns, one for rooks, etc)
 Board representation
