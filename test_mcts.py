@@ -32,7 +32,7 @@ def compare_policies(game, p1, p2, games, prob, time_limit_1, time_limit_2):
 
         while not position.is_terminal():
             if random.random() < prob:
-                if position.actor() == i % 2:
+                if position.actor() != i % 2:
                     start = time.time()
                     move = p1_policy(position)
                     p1_time = max(p1_time, time.time() - start)
@@ -54,6 +54,7 @@ def compare_policies(game, p1, p2, games, prob, time_limit_1, time_limit_2):
             p1_wins += 1
         else:
             p2_wins += 1
+        print(position.to_game())
 
     if p1_time > time_limit_1 + 0.01:
         print("WARNING: max time for P1 =", p1_time)
@@ -129,6 +130,14 @@ if __name__ == "__main__":
         default=0.0,
         help="p(random instead of minimax) (default=0.0)",
     )
+    parser.add_argument(
+        "--starting_position",
+        dest="starting_position",
+        type=str,
+        action="store",
+        default=0.0,
+        help="starting position of the games to be simulated in fen",
+    )
     args = parser.parse_args()
 
     try:
@@ -140,8 +149,10 @@ if __name__ == "__main__":
             raise MCTSTestError("p_random must be between 0.0 and 1.0 inclusive")
         if args.time <= 0:
             raise MCTSTestError("time must be positive")
-
-        game = Chess()
+        if not args.starting_position:
+            game = Chess()
+        else:
+            game = Chess(args.starting_position)
 
         test_game(
             game,

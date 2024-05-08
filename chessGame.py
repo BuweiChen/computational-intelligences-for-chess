@@ -4,6 +4,8 @@ from game import Game, State
 import chess
 from chess import Board
 from copy import deepcopy
+import collections
+import chess.pgn
 
 
 class Chess(Game):
@@ -12,7 +14,7 @@ class Chess(Game):
 
     def initial_state(self):
         """Returns the initial state of this game."""
-        return ChessState(Board("2k5/5RP1/4N3/2p4K/2P5/P1P5/7P/8 w - - 1 102"))
+        return ChessState(self.board)
 
 
 class ChessState(State):
@@ -97,7 +99,7 @@ class ChessState(State):
         white_king_mobility = self.king_mobility(chess.WHITE)
         black_king_mobility = self.king_mobility(chess.BLACK)
         mobility_factor = (
-            0.1  # Adjust this factor to tune the influence of mobility on the heuristic
+            0.5  # Adjust this factor to tune the influence of mobility on the heuristic
         )
 
         # Calculate the mobility difference
@@ -124,6 +126,27 @@ class ChessState(State):
             move for move in self.board.legal_moves if move.from_square == king_position
         ]
         return len(legal_moves)
+
+    def to_game(self):
+        board = self.board
+        game = chess.pgn.Game()
+
+        # Undo all moves.
+        switchyard = collections.deque()
+        while board.move_stack:
+            switchyard.append(board.pop())
+
+        game.setup(board)
+        node = game
+
+        # Replay all moves.
+        while switchyard:
+            move = switchyard.pop()
+            node = node.add_variation(move)
+            board.push(move)
+
+        game.headers["Result"] = board.result()
+        return game
 
     def __hash__(self):
         return hash(self.board.board_fen()) * 2 + hash(self.board.turn)
